@@ -4,7 +4,7 @@
 /// <reference path="../elements/shader.ts" />
 
 @component("brdf-viewport")
-@behavior(Polymer.IronResizableBehavior)
+@behavior(Polymer["IronResizableBehavior"])
 class BrdfViewport extends polymer.Base {
 
     renderer: THREE.WebGLRenderer;

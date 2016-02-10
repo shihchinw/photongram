@@ -5,7 +5,7 @@
 /// <reference path="../elements/shader.ts" />
 
 @component("model-viewport")
-@behavior(Polymer.IronResizableBehavior)
+@behavior(Polymer["IronResizableBehavior"])
 class ModelViewport extends polymer.Base {
     renderer: THREE.WebGLRenderer;
     scene: THREE.Scene;

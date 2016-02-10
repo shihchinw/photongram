@@ -33,7 +33,7 @@ gulp.task('vulcanize', function () {
 });
 
 gulp.task('compress', function () {
-    return gulp.src('app/scripts/**/*.js')
+    return gulp.src('app/scripts/*.js')
         .pipe(uglify())
         .pipe(gulp.dest(dist('scripts')));
 });
@@ -72,7 +72,7 @@ gulp.task('clean', function () {
 });
 
 // Watch files for changes & reload
-gulp.task('serve', [], function () {
+gulp.task('serve', ['ts-build'], function () {
     browserSync({
         port: 8000,
         notify: false,
@@ -83,6 +83,8 @@ gulp.task('serve', [], function () {
     });
 
     gulp.watch(['app/**/*.html'], reload);
+    gulp.watch(['app/elements/*.ts'], ['ts-build', reload]);
+    gulp.watch(['app/scripts/**/*.js'], reload);
 });
 
 // Build and serve the output from the dist build
@@ -98,7 +100,7 @@ gulp.task('serve:dist', ['default'], function () {
 // Build production files, the default task
 gulp.task('default', ['clean'], function (cb) {
     runSequence(
-        'copy', 'compress', 'vulcanize',
+        'copy', ['ts-build', 'compress'], 'vulcanize',
         cb);
 });
 
