@@ -7,6 +7,7 @@
 <link rel="import" href="../bower_components/paper-color-picker/paper-color-picker.html">
 <link rel="import" href="../bower_components/paper-button-group/paper-button-group.html">
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../bower_components/marked-element/marked-element.html">
 
 <link rel="import" href="shader-panel.html">
 <link rel="import" href="viewport.html">
@@ -76,6 +77,32 @@
                 <paper-button dialog-confirm>Accept</paper-button>
             </div>
         </paper-dialog>
+
+        <paper-dialog id="helpDialog">
+            <section>
+            <marked-element>
+            <div class="markdown-html"></div>
+            <script type="text/markdown">
+                # Photongram 0.1
+
+                ### Shader manipulation
+                * <iron-icon icon="custom-icons:menu"></iron-icon> toggle shader control panel
+                * <iron-icon icon="custom-icons:place"></iron-icon> switch shader in *model view*
+                * To remove a shader plot, just swipe that item!
+                * To control light direction, please tap the trackball at bottom right.
+
+                ### Keyboard shortcuts
+                * **d**: 3d-plot view
+                * **g**: model view
+                * **m**: switch render geometry in model view
+                * **h**: show help dialog
+            </script>
+            </marked-element>
+            </section>
+            <div class="buttons">
+                <paper-button dialog-confirm>OK</paper-button>
+            </div>
+        </paper-dialog>
     </template>
     <script>
         Polymer({
@@ -88,6 +115,7 @@
             listeners: {
                 "open-color-picker": "_openColorPicker",
                 "open-model-picker": "_openModelPicker",
+                "open-help-dialog": "_openHelpDialog",
                 "modelPicker.iron-overlay-closed": "_onModelPickerClosed",
                 "toogle-spinner": "_toggleSpinner"
             },
@@ -121,6 +149,10 @@
                         this.selectedModel = modelName;
                     }
                 }
+            },
+
+            _openHelpDialog: function(e) {
+                this.$.helpDialog.open();
             },
 
             _toggleSpinner: function(e) {

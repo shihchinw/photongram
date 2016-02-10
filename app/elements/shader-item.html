@@ -6,6 +6,7 @@
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../bower_components/paper-tooltip/paper-tooltip.html">
 
 <script type="text/javascript" src="../scripts/elements/shader.js"></script>
 
@@ -88,10 +89,13 @@
             </button>
             <paper-icon-button id="selection" icon="custom-icons:place" toggles
                                on-tap="_select" active="{{selected}}"></paper-icon-button>
+            <paper-tooltip for="selection">Active in model view</paper-tooltip>
             <paper-icon-button id="visibility" icon="[[_visibilityIcon(visible)]]"
                                toggles on-tap="_toggleVisibility"></paper-icon-button>
+            <paper-tooltip for="visibility">Visibility in 3d-plot view</paper-tooltip>
             <paper-icon-button id="color-fill" icon="custom-icons:format-color-fill"
                                on-tap="_openColorPicker"></paper-icon-button>
+            <paper-tooltip for="color-fill">Object color in 3d-plot view</paper-tooltip>
         </div>
 
         <iron-collapse id="collapse" tabindex="0" opened="{{opened}}">
