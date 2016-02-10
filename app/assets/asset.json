@@ -1,0 +1,12 @@
+{
+    "brdf": [
+        "Lambert",
+        "Phong",
+        "Blinn-Phong",
+        "Cook-Torrance"
+    ],
+    "model": [
+        "teapot",
+        "bunny"
+    ]
+}

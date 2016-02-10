@@ -1,0 +1,167 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../bower_components/iron-signals/iron-signals.html">
+<link rel="import" href="../bower_components/paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../bower_components/iron-swipeable-container/iron-swipeable-container.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-menu/paper-menu.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+
+<link rel="import" href="shader-item.html">
+
+<dom-module id="shader-panel">
+    <template>
+        <style is="custom-style">
+            :host {
+                display: block;
+            }
+
+            paper-toolbar {
+                --paper-toolbar-height: 40px;
+            }
+
+            paper-dropdown-menu {
+                width: 80%;
+            }
+
+            paper-toggle-button {
+                font-size: 0.8em;
+                --paper-toggle-button-label-color: white;
+            }
+
+            .common-settings {
+                margin-left: 10px;
+            }
+        </style>
+
+        <div class="flex-vertical">
+            <paper-toolbar><span class="title">Photongram</span></paper-toolbar>
+            <iron-ajax id="topodata" auto url="../assets/asset.json" handleAs="json"
+                       last-response="{{assets}}"></iron-ajax>
+
+            <div class="common-settings">
+                <div>
+                    <paper-dropdown-menu label="BRDF" no-label-float=true>
+                        <paper-menu id="brdfMenu" class="dropdown-content"
+                            attr-for-selected="name" on-iron-select="_onItemSelected">
+                            <!-- Create brdf items dynamically. -->
+                            <template is="dom-repeat"
+                                      items="{{assets.brdf}}"
+                                      as="brdfName">
+                                <paper-item name="{{brdfName}}">{{brdfName}}</paper-item>
+                            </template>
+                        </paper-menu>
+                    </paper-dropdown-menu>
+                    <paper-icon-button id="addButton" icon="custom-icons:add-box"
+                                       on-click="_addBRDF" disabled=true></paper-icon-button>
+                </div>
+                <paper-toggle-button on-change="_changePlotState">Multiply N.L</paper-toggle-button>
+            </div>
+
+            <iron-swipeable-container class="swipe" id="shaderList" swipe-style="curve" on-iron-swipe="_removeBRDF">
+                <!-- shader-items are added here... -->
+            </iron-swipeable-container>
+        </div>
+    </template>
+
+    <script>
+        Polymer({
+            is: "shader-panel",
+
+            ready: function() {
+                this.colorList = ["#65a5f2", "#83be54", "#f0d551", "#e5943c", "#a96ddb"];
+                this.shaderSrcSet = new Set();
+            },
+
+            listeners: {
+                "shader-selected": "_updateSelectedShader",
+                "shader-param-changed": "_updateShaderParam",
+                "shader-visibility-changed": "_changeShaderVisibility"
+            },
+
+            _onItemSelected: function(e) {
+                var shaderName = e.target.selected.toLowerCase();
+
+                if (!this.shaderSrcSet.has(shaderName)) {
+                    loadShader(shaderName);
+                    this.shaderSrcSet.add(shaderName);
+                }
+
+                this.$.addButton.disabled = false;
+            },
+
+            _hexToRgb: function(hex) {
+                var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? {
+                    red: parseInt(result[1], 16),
+                    green: parseInt(result[2], 16),
+                    blue: parseInt(result[3], 16)
+                } : null;
+            },
+
+            _addBRDF: function() {
+                var brdfLabel = this.$.brdfMenu.selected;
+                var brdfName = brdfLabel.toLowerCase();
+                var shaderItem = document.createElement("shader-item");
+                shaderItem.label = brdfLabel;
+                shaderItem.name = brdfName;
+                shaderItem.opened = true;
+                shaderItem.createShaderAttrs(brdfName);
+
+                var shaderList = Polymer.dom(this.$.shaderList);
+                var itemIdx = shaderList.children.length;
+                shaderList.appendChild(shaderItem);
+
+                this.fire("iron-signal", {name: "shader-added", data: brdfName});
+
+                if (itemIdx === 0) {
+                    shaderItem.selected = true;
+                    // Fire shader-selected event to trigger viewport update.
+                    this.fire("iron-signal", {name: "shader-selected", data: brdfName});
+                }
+
+                // TODO: Try to avoid this async trigger.
+                this.async(function() {
+                    var colorIdx = itemIdx % this.colorList.length;
+                    shaderItem.color = this._hexToRgb(this.colorList[colorIdx]);
+                }, 1);
+            },
+
+            _removeBRDF: function(e) {
+                var brdfName = e.detail.target.name;
+                this.fire("iron-signal", {name: "shader-removed", data: brdfName});
+            },
+
+            _changePlotState: function(e) {
+                this.fire("iron-signal", {
+                    name: "shader-param-changed",
+                    data: {
+                        shaderName: "all",
+                        name: "uMultiplyCos",
+                        value: +e.target.checked
+                    }
+                });
+            },
+
+            _updateSelectedShader: function(e) {
+                var selectedShaderName = e.detail;
+                var shaderList = Polymer.dom(this.$.shaderList).children;
+                shaderList.forEach((item) => {
+                    item.selected = (selectedShaderName === item.name);
+                });
+
+                this.fire("iron-signal", {name: "shader-selected", data: selectedShaderName});
+            },
+
+            _updateShaderParam: function(e) {
+                this.fire("iron-signal", {name: "shader-param-changed", data: e.detail});
+            },
+
+            _changeShaderVisibility: function(e) {
+                this.fire("iron-signal", {name: "shader-param-changed", data: e.detail});
+            }
+        });
+    </script>
+</dom-module>

@@ -1,0 +1,135 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/iron-a11y-keys/iron-a11y-keys.html">
+<link rel="import" href="../bower_components/iron-signals/iron-signals.html">
+
+<link rel="import" href="track-ball.html">
+<link rel="import" href="brdf-viewport.html">
+<link rel="import" href="model-viewport.html">
+
+<dom-module id="render-viewport">
+    <template>
+        <style is="custom-style">
+            :host {
+                width: 100%;
+                height: 100%;
+                display: block;
+            }
+
+            iron-pages {
+                @apply(--layout-fit);
+                color: white;
+                margin: auto;
+                cursor: default;
+            }
+
+            .viewport {
+                @apply(--layout-fit);
+                margin: auto;
+                background: #1b1c1e;
+                background-image: linear-gradient(#7d8fa3, #1b1c1e);
+            }
+
+            canvas {
+                position: absolute;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                left: 0;
+            }
+        </style>
+
+        <iron-a11y-keys id="keys" keys="d f m" target="[[target]]" on-keys-pressed="_onPressed">
+        </iron-a11y-keys>
+
+        <iron-pages id="panel" attr-for-selected="name" selected="brdfPlot"
+            on-iron-select="_onSelect" on-iron-deselect="_onDeselect">
+            <brdf-viewport id="brdfPlot" name="brdfPlot"></brdf-viewport>
+            <model-viewport id="modelPanel" name="objView"></model-viewport>
+        </iron-pages>
+        <track-ball on-light-pos-changed="_changeLightPos"></track-ball>
+
+        <!-- Binding signals from the attribute panel. -->
+        <iron-signals on-iron-signal-shader-added='_addShader'></iron-signals>
+        <iron-signals on-iron-signal-shader-removed='_removeShader'></iron-signals>
+        <iron-signals on-iron-signal-shader-selected='_selectShader'></iron-signals>
+        <iron-signals on-iron-signal-shader-param-changed='_updateShaderParam'></iron-signals>
+    </template>
+    <script>
+        Polymer({
+            is: 'render-viewport',
+
+            properties: {
+                target: {
+                    type: Object,
+                    value: function () {
+                        return document.body;
+                        // How can I bound to panel only?
+                        return this.$.panel;
+                    }
+                }
+            },
+
+            listeners: {
+                "shader-select": "_updateSelectedShader"
+            },
+
+            _onPressed: function(event) {
+                var key = event.detail.key;
+                if (key === "m") {
+                    this.fire("open-model-picker");
+                } else {
+                    var widgetName = key === "d" ? "brdfPlot" : "objView";
+                    this.$.panel.select(widgetName);
+                }
+            },
+
+            renderJob: function() {
+                this.$.panel.selectedItem.renderJob();
+            },
+
+            _onSelect: function(e) {
+                e.detail.item.visible = true;
+            },
+
+            _onDeselect: function(e) {
+                e.detail.item.visible = false;
+            },
+
+            _addShader: function(e) {
+                var shaderName = e.detail;
+                this.$.brdfPlot.addPlotObj(shaderName);
+                this.$.modelPanel.addMaterial(shaderName);
+            },
+
+            _removeShader: function(e) {
+                var shaderName = e.detail;
+                this.$.brdfPlot.removePlotObj(shaderName);
+                this.$.modelPanel.removeMaterial(shaderName);
+            },
+
+            _selectShader: function(e) {
+                var shaderName = e.detail;
+                this.$.modelPanel.changeShader(shaderName);
+            },
+
+            _updateShaderParam: function (e) {
+                var param = e.detail;
+                if  (param.hasOwnProperty('visible')) {
+                    this.$.brdfPlot.changeVisibility(param);
+                } else {
+                    this.$.brdfPlot.updateShaderParam(param);
+                    this.$.modelPanel.updateShaderParam(param);
+                }
+            },
+
+            _changeLightPos: function (event) {
+                this.$.panel.selectedItem.changeLightPos(event);
+            },
+
+            changeModel: function(modelName) {
+                this.$.modelPanel.changeModel(modelName);
+            }
+        });
+    </script>
+</dom-module>

@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "outDir": "app/scripts/elements",
+        "sourceMap": true,
+        "experimentalDecorators": true
+    },
+    "files": [
+        "app/elements/shader.ts",
+        "app/elements/brdf-viewport.ts",
+        "app/elements/model-viewport.ts",
+        "app/elements/track-ball.ts"
+    ]
+}

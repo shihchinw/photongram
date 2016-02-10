@@ -1,0 +1,299 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-slider/paper-slider.html">
+
+<script type="text/javascript" src="../scripts/elements/shader.js"></script>
+
+<dom-module id="shader-item">
+    <template>
+        <style is="custom-style">
+            :host {
+                display: block;
+            }
+
+            .heading {
+                padding: 5px 15px;
+                margin-top: 5px;
+                border: 1px solid #888;
+                border-top-left-radius: 10px;
+                border-top-right-radius: 10px;
+                font-weight: bold;
+                cursor: pointer;
+                -webkit-tap-highlight-color: rgba(0,0,0,0);
+                text-align: left;
+            }
+
+            .heading-button {
+                border: 0px;
+                background-color: rgba(0, 0, 0, 0.0);
+                color: white;
+                font-weight: bold;
+                cursor: pointer;
+                -webkit-tap-highlight-color: rgba(0,0,0,0);
+                text-align: left;
+            }
+
+            .heading-button:focus {
+                outline: none;
+            }
+
+            .content {
+                padding: 5px 5px;
+            }
+
+            iron-collapse {
+                overflow-y: hidden;
+                border: 1px solid #888;
+            }
+
+            iron-collapse:focus {
+                outline: none;
+            }
+
+            .flex-horizontal {
+                @apply(--layout-horizontal);
+                @apply(--layout-center);
+            }
+
+            .flexchild {
+                @apply(--layout-flex);
+            }
+
+            paper-icon-button {
+                padding: 0px;
+                margin: 0px 5px;
+                width: 20px;
+                height: 20px;
+            }
+
+            paper-icon-button#selection[active] {
+                color: #ffeb3b;
+            }
+
+            #color-fill {
+                color: var(--display-color);
+            }
+        </style>
+
+        <div class="heading flex-horizontal">
+            <button class="heading-button flexchild"
+                    aria-expanded$="[[isExpanded(opened)]]"
+                    aria-controls="collapse" on-click="toggle">
+            <span>[[label]]</span>
+            </button>
+            <paper-icon-button id="selection" icon="custom-icons:place" toggles
+                               on-tap="_select" active="{{selected}}"></paper-icon-button>
+            <paper-icon-button id="visibility" icon="[[_visibilityIcon(visible)]]"
+                               toggles on-tap="_toggleVisibility"></paper-icon-button>
+            <paper-icon-button id="color-fill" icon="custom-icons:format-color-fill"
+                               on-tap="_openColorPicker"></paper-icon-button>
+        </div>
+
+        <iron-collapse id="collapse" tabindex="0" opened="{{opened}}">
+            <div class="content" id="container"></div>
+        </iron-collapse>
+    </template>
+    <script>
+        Polymer({
+            is: 'shader-item',
+
+            properties: {
+                label: String,
+                name: {
+                    type: String,
+                    value: "Unknown"
+                },
+                opened: {
+                    type: Boolean,
+                    value: false
+                },
+                color: {
+                    type: Object,
+                    observer: "_colorChanged"
+                },
+                visible: Boolean,
+                selected: Boolean
+            },
+
+            listeners: {
+                "param-changed": "_onParamChanged"
+            },
+
+            ready: function() {
+                this.color = {red: 200, green: 200, blue: 200};
+                this.visible = true;
+            },
+
+            createShaderAttrs: function(shaderName) {
+                var shaderProp = pgLib[shaderName];
+                this._addParamCtrls(shaderProp);
+            },
+
+            _visibilityIcon: function(visible) {
+                return visible
+                    ? "custom-icons:visibility"
+                    : "custom-icons:visibility-off";
+            },
+
+            _toggleVisibility: function() {
+                this.visible = !this.visible;
+                this.fire("shader-visibility-changed", {
+                    shaderName: this.name,
+                    visible: this.visible
+                });
+            },
+
+            _select: function(event) {
+                this.fire("shader-selected", this.name);
+            },
+
+            _addParamCtrls: function(shaderProp) {
+                for (var key in shaderProp.uniforms) {
+                    if (!shaderProp.uniforms.hasOwnProperty(key)) {
+                        continue;
+                    }
+
+                    var param = shaderProp.uniforms[key];
+                    switch (param.type) {
+                        case "f":
+                            this._createScalarCtrl(key, param);
+                            break;
+
+                        default:
+                            console.warn(`Invalid parameter type ${param.type}`);
+                    }
+                }
+            },
+
+            _createScalarCtrl: function(key, param) {
+                var control = document.createElement("scalar-control");
+                control.name = key;
+                control.label = param.uiName;
+                control.value = param.value;
+
+                if (param.hasOwnProperty("minValue")) {
+                    control.range = [param.minValue, param.maxValue];
+                }
+
+                Polymer.dom(this.$.container).appendChild(control);
+            },
+
+            toggle: function() {
+                this.$.collapse.toggle();
+            },
+
+            _openColorPicker: function(e) {
+                this.fire("open-color-picker", this);
+                e.preventDefault();
+                e.stopPropagation();
+            },
+
+            _colorChanged: function(color) {
+                var colorStr = `rgb(${color.red}, ${color.green}, ${color.blue})`;
+                this.customStyle["--display-color"] = colorStr;
+                this.updateStyles();
+
+                this.fire("shader-param-changed", {
+                    shaderName: this.name,
+                    name: "uDisplayColor",
+                    value: new THREE.Color(colorStr)
+                });
+            },
+
+            isExpanded: function(opened) {
+                return String(opened);
+            },
+
+            _onParamChanged: function (e) {
+                e.detail.shaderName = this.name;
+                this.fire("shader-param-changed", e.detail);
+            }
+        });
+    </script>
+</dom-module>
+
+
+<!-- Used for float attribute. -->
+<dom-module id="scalar-control">
+    <template>
+        <style is="custom-style">
+            :host {
+                display: block;
+            }
+
+            .caption {
+                padding-left: 5px;
+                font-size: 0.8em;
+            }
+
+            paper-input {
+                margin-left: 5px;
+                width: 180px;
+            }
+        </style>
+
+        <div id="container" flex>
+            <div class="caption">{{label}}</div>
+        </div>
+
+    </template>
+    <script>
+        Polymer({
+            is: 'scalar-control',
+
+            properties: {
+                name: String,
+                label: String,
+                range: {
+                    type: Array,
+                    value: function() {
+                        return [];
+                    }
+                },
+                value: Number
+            },
+
+            attached: function() {
+                if (this.range.length) {
+                    var slider = document.createElement("paper-slider");
+                    slider.min = this.range[0];
+                    slider.max = this.range[1];
+                    slider.step = 0.01;
+                    slider.pin = true;
+                    slider.value = this.value;
+                    slider.addEventListener("immediate-value-change", this._onSliderChanged.bind(this));
+                    Polymer.dom(this.$.container).appendChild(slider);
+                } else {
+                    var textField = document.createElement("paper-input");
+                    textField.setAttribute("type", "number");
+                    textField.noLabelFloat = true;
+                    textField.step = "0.1";
+                    textField.addEventListener("change", this._onInputChanged.bind(this));
+                    textField.value = this.value;
+                    Polymer.dom(this.$.container).appendChild(textField);
+                }
+            },
+
+            _fire: function () {
+                this.fire("param-changed", {name: this.name, value: this.value});
+            },
+
+            _onSliderChanged: function(e) {
+                var srcElement = e.srcElement || e.originalTarget;
+                this.value = srcElement.immediateValue;
+                this._fire();
+            },
+
+            _onInputChanged: function(e) {
+                var srcElement = e.srcElement || e.originalTarget;
+                this.value = srcElement.value;
+                this._fire();
+            }
+        });
+    </script>
+</dom-module>

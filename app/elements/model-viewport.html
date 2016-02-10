@@ -1,0 +1,25 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-resizable-behavior/iron-resizable-behavior.html">
+<link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
+
+<dom-module id="model-viewport">
+    <template>
+        <style is="custom-style">
+            :host {
+                @apply(--layout-fit);
+                width: 100%;
+                height: 100%;
+                display: block;
+                margin: auto;
+                background: #1b1c1e;
+                background-image: linear-gradient(#7d8fa3, #1b1c1e);
+            }
+
+            #spinner {
+                z-index: 10;
+            }
+        </style>
+    </template>
+</dom-module>
+
+<script type="text/javascript" src="../scripts/elements/model-viewport.js"></script>

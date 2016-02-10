@@ -1,0 +1,131 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/polymer-ts/polymer-ts.html">
+
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-drawer-panel/paper-drawer-panel.html">
+<link rel="import" href="../bower_components/paper-color-picker/paper-color-picker.html">
+<link rel="import" href="../bower_components/paper-button-group/paper-button-group.html">
+<link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
+
+<link rel="import" href="shader-panel.html">
+<link rel="import" href="viewport.html">
+<link rel="import" href="custom-icons.html">
+
+<dom-module id="photon-gram">
+    <template>
+        <style is="custom-style">
+            :host {
+                display: block;
+                width: 100vw;
+                height: 100vh;
+            }
+
+            #menu {
+                position: absolute;
+                z-index: 10;
+                right: 5px;
+                top: 0px;
+            }
+
+            #paperDrawerPanel[right-drawer] [drawer] {
+                background-color: #333;
+            }
+
+            paper-button.thumb-nail {
+                background-color: var(--paper-green-500);
+                color: white;
+            }
+            paper-button.thumb-nail[active] {
+                background-color: var(--paper-red-500);
+            }
+
+            #spinner {
+                position:absolute;
+                left: calc(50% - 14px);
+                top: calc(50% - 14px);
+            }
+        </style>
+
+        <paper-drawer-panel right-drawer id="paperDrawerPanel" force-narrow drawerWidth="350px">
+        <div drawer right-drawer>
+            <shader-panel></shader-panel>
+        </div>
+        <div main>
+            <paper-icon-button id="menu" icon="custom-icons:menu" paper-drawer-toggle></paper-icon-button>
+            <render-viewport id="renderViewport"></render-viewport>
+        </div>
+        </paper-drawer-panel>
+
+        <paper-spinner id="spinner"></paper-spinner>
+
+        <!-- https://github.com/PolymerElements/paper-dialog/issues/44 -->
+        <paper-color-picker id="colorPicker" colorAsString="#FF00FF"></paper-color-picker>
+
+        <paper-dialog id="modelPicker">
+            <h2>Switch Geometry Model</h2>
+            <div class="horizontal-section">
+                <paper-button-group id="modelOptions" selected="sphere">
+                    <paper-button toggles class="thumb-nail" name="sphere">Sphere</paper-button>
+                    <paper-button toggles class="thumb-nail" name="teapot">Teapot</paper-button>
+                    <paper-button toggles class="thumb-nail" name="bunny">Bunny</paper-button>
+                </paper-button-group>
+            </div>
+            <div class="buttons">
+                <paper-button dialog-dismiss>Cancel</paper-button>
+                <paper-button dialog-confirm>Accept</paper-button>
+            </div>
+        </paper-dialog>
+    </template>
+    <script>
+        Polymer({
+            is: 'photon-gram',
+
+            properties: {
+                selectedModel: String
+            },
+
+            listeners: {
+                "open-color-picker": "_openColorPicker",
+                "open-model-picker": "_openModelPicker",
+                "modelPicker.iron-overlay-closed": "_onModelPickerClosed",
+                "toogle-spinner": "_toggleSpinner"
+            },
+
+            ready: function() {
+                this.selectedModel = this.$.modelOptions.selected;
+            },
+
+            _openColorPicker: function(event) {
+                // TODO: Is there any other way to avoid such dynamic binding?
+                var sourceElement = event.srcElement;   // type=>shader-item
+                var onCloseColorPicker;
+                this.$.colorPicker.color = sourceElement.color;
+                this.$.colorPicker.addEventListener("color-changed", onCloseColorPicker = function (e) {
+                    sourceElement.color = Object.assign({}, e.target.immediateColor);
+                    this.$.colorPicker.removeEventListener('color-changed', onCloseColorPicker);
+                }.bind(this));
+                this.$.colorPicker.open();
+            },
+
+            _openModelPicker: function(event) {
+                this.$.modelOptions.selected = this.selectedModel;
+                this.$.modelPicker.open();
+            },
+
+            _onModelPickerClosed: function(e) {
+                if (e.detail.confirmed) {
+                    var modelName = this.$.modelOptions.selected;
+                    if (this.selectedModel !== modelName) {
+                        this.$.renderViewport.changeModel(modelName);
+                        this.selectedModel = modelName;
+                    }
+                }
+            },
+
+            _toggleSpinner: function(e) {
+                this.$.spinner.active = e.detail;
+            }
+        });
+    </script>
+</dom-module>
