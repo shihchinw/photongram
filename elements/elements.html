@@ -2908,6 +2908,20 @@ h1, h3, h5 { text-transform: uppercase; }
   </template>
 
   </dom-module>
+<dom-module id="marked-element" assetpath="../bower_components/marked-element/">
+  <template>
+    <style>
+      /* Thanks IE 10. */
+      .hidden {
+        display: none !important;
+      }
+    </style>
+    <content select=".markdown-html"></content>
+    <div id="content" class="hidden"></div>
+  </template>
+
+</dom-module>
+
 <dom-module id="paper-toolbar" assetpath="../bower_components/paper-toolbar/">
   <template>
     <style>
@@ -3815,6 +3829,52 @@ h1, h3, h5 { text-transform: uppercase; }
   </template>
 
   </dom-module>
+<dom-module id="paper-tooltip" assetpath="../bower_components/paper-tooltip/">
+  <template>
+    <style>
+      :host {
+        display: block;
+        position: absolute;
+        outline: none;
+        z-index: 1002;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        -webkit-user-select: none;
+        user-select: none;
+        cursor: default;
+      }
+
+      #tooltip {
+        display: block;
+        outline: none;
+        @apply(--paper-font-common-base);
+        font-size: 10px;
+        line-height: 1;
+
+        background-color: var(--paper-tooltip-background, #616161);
+        opacity: var(--paper-tooltip-opacity, 0.9);
+        color: var(--paper-tooltip-text-color, white);
+
+        padding: 8px;
+        border-radius: 2px;
+
+        @apply(--paper-tooltip);
+      }
+
+      /* Thanks IE 10. */
+      .hidden {
+        display: none !important;
+      }
+    </style>
+
+    <div id="tooltip" class="hidden">
+      <content></content>
+    </div>
+  </template>
+
+  </dom-module>
+
+
 <dom-module id="iron-collapse" assetpath="../bower_components/iron-collapse/">
 
   <style>
@@ -3919,8 +3979,11 @@ h1, h3, h5 { text-transform: uppercase; }
             <span>[[label]]</span>
             </button>
             <paper-icon-button id="selection" icon="custom-icons:place" toggles="" on-tap="_select" active="{{selected}}"></paper-icon-button>
+            <paper-tooltip for="selection">Active in model view</paper-tooltip>
             <paper-icon-button id="visibility" icon="[[_visibilityIcon(visible)]]" toggles="" on-tap="_toggleVisibility"></paper-icon-button>
+            <paper-tooltip for="visibility">Visibility in 3d-plot view</paper-tooltip>
             <paper-icon-button id="color-fill" icon="custom-icons:format-color-fill" on-tap="_openColorPicker"></paper-icon-button>
+            <paper-tooltip for="color-fill">Object color in 3d-plot view</paper-tooltip>
         </div>
 
         <iron-collapse id="collapse" tabindex="0" opened="{{opened}}">
@@ -3980,7 +4043,10 @@ h1, h3, h5 { text-transform: uppercase; }
         </style>
 
         <div class="flex-vertical">
-            <paper-toolbar><span class="title">Photongram</span></paper-toolbar>
+            <paper-toolbar>
+                <span class="title">Photongram</span>
+                <paper-tooltip position="bottom">Press <b>'h'</b> for more info.</paper-tooltip>
+            </paper-toolbar>
             <iron-ajax id="topodata" auto="" url="../assets/asset.json" handleas="json" last-response="{{assets}}"></iron-ajax>
 
             <div class="common-settings">
@@ -4107,7 +4173,7 @@ h1, h3, h5 { text-transform: uppercase; }
             }
         </style>
 
-        <iron-a11y-keys id="keys" keys="d f m" target="[[target]]" on-keys-pressed="_onPressed">
+        <iron-a11y-keys id="keys" keys="d g m h" target="[[target]]" on-keys-pressed="_onPressed">
         </iron-a11y-keys>
 
         <iron-pages id="panel" attr-for-selected="name" selected="brdfPlot" on-iron-select="_onSelect" on-iron-deselect="_onDeselect">
@@ -4197,6 +4263,32 @@ h1, h3, h5 { text-transform: uppercase; }
             <div class="buttons">
                 <paper-button dialog-dismiss="">Cancel</paper-button>
                 <paper-button dialog-confirm="">Accept</paper-button>
+            </div>
+        </paper-dialog>
+
+        <paper-dialog id="helpDialog">
+            <section>
+            <marked-element>
+            <div class="markdown-html"></div>
+            <script type="text/markdown">
+                # Photongram 0.1
+
+                ### Shader manipulation
+                * <iron-icon icon="custom-icons:menu"></iron-icon> toggle shader control panel
+                * <iron-icon icon="custom-icons:place"></iron-icon> switch shader in *model view*
+                * To remove a shader plot, just swipe that item!
+                * To control light direction, please tap the trackball at bottom right.
+
+                ### Keyboard shortcuts
+                * **d**: 3d-plot view
+                * **g**: model view
+                * **m**: switch render geometry in model view
+                * **h**: show help dialog
+            </script>
+            </marked-element>
+            </section>
+            <div class="buttons">
+                <paper-button dialog-confirm="">OK</paper-button>
             </div>
         </paper-dialog>
     </template>
