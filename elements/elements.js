@@ -20328,6 +20328,170 @@ if (!window.Promise) {
 
   });
 Polymer({
+
+    is: 'iron-collapse',
+
+    behaviors: [
+      Polymer.IronResizableBehavior
+    ],
+
+    properties: {
+
+      /**
+       * If true, the orientation is horizontal; otherwise is vertical.
+       *
+       * @attribute horizontal
+       */
+      horizontal: {
+        type: Boolean,
+        value: false,
+        observer: '_horizontalChanged'
+      },
+
+      /**
+       * Set opened to true to show the collapse element and to false to hide it.
+       *
+       * @attribute opened
+       */
+      opened: {
+        type: Boolean,
+        value: false,
+        notify: true,
+        observer: '_openedChanged'
+      },
+
+      /**
+       * Set noAnimation to true to disable animations
+       *
+       * @attribute noAnimation
+       */
+      noAnimation: {
+        type: Boolean
+      },
+
+    },
+
+    get dimension() {
+      return this.horizontal ? 'width' : 'height';
+    },
+
+    hostAttributes: {
+      role: 'group',
+      'aria-hidden': 'true',
+      'aria-expanded': 'false'
+    },
+
+    listeners: {
+      transitionend: '_transitionEnd'
+    },
+
+    attached: function() {
+      // It will take care of setting correct classes and styles.
+      this._transitionEnd();
+    },
+
+    /**
+     * Toggle the opened state.
+     *
+     * @method toggle
+     */
+    toggle: function() {
+      this.opened = !this.opened;
+    },
+
+    show: function() {
+      this.opened = true;
+    },
+
+    hide: function() {
+      this.opened = false;
+    },
+
+    updateSize: function(size, animated) {
+      // No change!
+      if (this.style[this.dimension] === size) {
+        return;
+      }
+
+      this._updateTransition(false);
+      // If we can animate, must do some prep work.
+      if (animated && !this.noAnimation) {
+        // Animation will start at the current size.
+        var startSize = this._calcSize();
+        // For `auto` we must calculate what is the final size for the animation.
+        // After the transition is done, _transitionEnd will set the size back to `auto`.
+        if (size === 'auto') {
+          this.style[this.dimension] = size;
+          size = this._calcSize();
+        }
+        // Go to startSize without animation.
+        this.style[this.dimension] = startSize;
+        // Force layout to ensure transition will go. Set offsetHeight to itself
+        // so that compilers won't remove it.
+        this.offsetHeight = this.offsetHeight;
+        // Enable animation.
+        this._updateTransition(true);
+      }
+      // Set the final size.
+      this.style[this.dimension] = size;
+    },
+
+    /**
+     * enableTransition() is deprecated, but left over so it doesn't break existing code.
+     * Please use `noAnimation` property instead.
+     *
+     * @method enableTransition
+     * @deprecated since version 1.0.4
+     */
+    enableTransition: function(enabled) {
+      console.warn('`enableTransition()` is deprecated, use `noAnimation` instead.');
+      this.noAnimation = !enabled;
+    },
+
+    _updateTransition: function(enabled) {
+      this.style.transitionDuration = (enabled && !this.noAnimation) ? '' : '0s';
+    },
+
+    _horizontalChanged: function() {
+      this.style.transitionProperty = this.dimension;
+      var otherDimension = this.dimension === 'width' ? 'height' : 'width';
+      this.style[otherDimension] = '';
+      this.updateSize(this.opened ? 'auto' : '0px', false);
+    },
+
+    _openedChanged: function() {
+      this.setAttribute('aria-expanded', this.opened);
+      this.setAttribute('aria-hidden', !this.opened);
+
+      this.toggleClass('iron-collapse-closed', false);
+      this.toggleClass('iron-collapse-opened', false);
+      this.updateSize(this.opened ? 'auto' : '0px', true);
+
+      // Focus the current collapse.
+      if (this.opened) {
+        this.focus();
+      }
+      if (this.noAnimation) {
+        this._transitionEnd();
+      }
+    },
+
+    _transitionEnd: function() {
+      if (this.opened) {
+        this.style[this.dimension] = 'auto';
+      }
+      this.toggleClass('iron-collapse-closed', !this.opened);
+      this.toggleClass('iron-collapse-opened', this.opened);
+      this._updateTransition(false);
+      this.notifyResize();
+    },
+
+    _calcSize: function() {
+      return this.getBoundingClientRect()[this.dimension] + 'px';
+    }
+
+  });
+Polymer({
       is: 'paper-tooltip',
 
       hostAttributes: {
@@ -20584,170 +20748,6 @@ Polymer({
         }
       },
     });
-Polymer({
-
-    is: 'iron-collapse',
-
-    behaviors: [
-      Polymer.IronResizableBehavior
-    ],
-
-    properties: {
-
-      /**
-       * If true, the orientation is horizontal; otherwise is vertical.
-       *
-       * @attribute horizontal
-       */
-      horizontal: {
-        type: Boolean,
-        value: false,
-        observer: '_horizontalChanged'
-      },
-
-      /**
-       * Set opened to true to show the collapse element and to false to hide it.
-       *
-       * @attribute opened
-       */
-      opened: {
-        type: Boolean,
-        value: false,
-        notify: true,
-        observer: '_openedChanged'
-      },
-
-      /**
-       * Set noAnimation to true to disable animations
-       *
-       * @attribute noAnimation
-       */
-      noAnimation: {
-        type: Boolean
-      },
-
-    },
-
-    get dimension() {
-      return this.horizontal ? 'width' : 'height';
-    },
-
-    hostAttributes: {
-      role: 'group',
-      'aria-hidden': 'true',
-      'aria-expanded': 'false'
-    },
-
-    listeners: {
-      transitionend: '_transitionEnd'
-    },
-
-    attached: function() {
-      // It will take care of setting correct classes and styles.
-      this._transitionEnd();
-    },
-
-    /**
-     * Toggle the opened state.
-     *
-     * @method toggle
-     */
-    toggle: function() {
-      this.opened = !this.opened;
-    },
-
-    show: function() {
-      this.opened = true;
-    },
-
-    hide: function() {
-      this.opened = false;
-    },
-
-    updateSize: function(size, animated) {
-      // No change!
-      if (this.style[this.dimension] === size) {
-        return;
-      }
-
-      this._updateTransition(false);
-      // If we can animate, must do some prep work.
-      if (animated && !this.noAnimation) {
-        // Animation will start at the current size.
-        var startSize = this._calcSize();
-        // For `auto` we must calculate what is the final size for the animation.
-        // After the transition is done, _transitionEnd will set the size back to `auto`.
-        if (size === 'auto') {
-          this.style[this.dimension] = size;
-          size = this._calcSize();
-        }
-        // Go to startSize without animation.
-        this.style[this.dimension] = startSize;
-        // Force layout to ensure transition will go. Set offsetHeight to itself
-        // so that compilers won't remove it.
-        this.offsetHeight = this.offsetHeight;
-        // Enable animation.
-        this._updateTransition(true);
-      }
-      // Set the final size.
-      this.style[this.dimension] = size;
-    },
-
-    /**
-     * enableTransition() is deprecated, but left over so it doesn't break existing code.
-     * Please use `noAnimation` property instead.
-     *
-     * @method enableTransition
-     * @deprecated since version 1.0.4
-     */
-    enableTransition: function(enabled) {
-      console.warn('`enableTransition()` is deprecated, use `noAnimation` instead.');
-      this.noAnimation = !enabled;
-    },
-
-    _updateTransition: function(enabled) {
-      this.style.transitionDuration = (enabled && !this.noAnimation) ? '' : '0s';
-    },
-
-    _horizontalChanged: function() {
-      this.style.transitionProperty = this.dimension;
-      var otherDimension = this.dimension === 'width' ? 'height' : 'width';
-      this.style[otherDimension] = '';
-      this.updateSize(this.opened ? 'auto' : '0px', false);
-    },
-
-    _openedChanged: function() {
-      this.setAttribute('aria-expanded', this.opened);
-      this.setAttribute('aria-hidden', !this.opened);
-
-      this.toggleClass('iron-collapse-closed', false);
-      this.toggleClass('iron-collapse-opened', false);
-      this.updateSize(this.opened ? 'auto' : '0px', true);
-
-      // Focus the current collapse.
-      if (this.opened) {
-        this.focus();
-      }
-      if (this.noAnimation) {
-        this._transitionEnd();
-      }
-    },
-
-    _transitionEnd: function() {
-      if (this.opened) {
-        this.style[this.dimension] = 'auto';
-      }
-      this.toggleClass('iron-collapse-closed', !this.opened);
-      this.toggleClass('iron-collapse-opened', this.opened);
-      this._updateTransition(false);
-      this.notifyResize();
-    },
-
-    _calcSize: function() {
-      return this.getBoundingClientRect()[this.dimension] + 'px';
-    }
-
-  });
 /// <reference path="../typings/threejs/three.d.ts" />
 var pgLib = {}; // Global variable to keep all shader templates.
 function loadShader(fileName) {
@@ -20770,17 +20770,110 @@ var plotObjMaterial = {
         "uDisplayColor": { type: "c", value: new THREE.Color() },
         "uMultiplyCos": { type: "1i", value: 0 },
     },
+    derivatives: true,
     vertexShader: "\nuniform vec3 uLightPos;\nuniform int uMultiplyCos;\n\nvarying vec4 vPosition;\n\n{{PHASE_FUNCTION}}\n\nvoid main(void)\n{\n    vec3 N = vec3(0.0, 1.0, 0.0);\n    vec3 L = normalize(uLightPos.xyz);\n    vec3 V = normalize(position.xyz);\n    vec3 pos = position.xyz * BRDF(L, V, N);\n\n    if (uMultiplyCos == 1) {\n        pos *= max(dot(N, L), 0.0);\n    }\n\n    vPosition = modelViewMatrix * vec4(pos, 1.0);\n    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);\n}\n    ",
-    fragmentShader: "\n#extension GL_OES_standard_derivatives : enable\nuniform vec3 uDisplayColor;\nvarying vec4 vPosition;\n\nvoid main() {\n    vec3 V = vPosition.xyz;\n    vec3 N = normalize(cross(dFdx(V.xyz), dFdy(V.xyz)));\n    vec3 L = vec3(0.0, 0.0, 1.0);\n    float cosTerm = max(dot(N, L), 0.0);\n\n    gl_FragColor = vec4(uDisplayColor * cosTerm, 1.0);\n}"
+    fragmentShader: "\nuniform vec3 uDisplayColor;\nvarying vec4 vPosition;\n\nvoid main() {\n    vec3 V = vPosition.xyz;\n    vec3 N = normalize(cross(dFdx(V.xyz), dFdy(V.xyz)));\n    vec3 L = vec3(0.0, 0.0, 1.0);\n    float cosTerm = max(dot(N, L), 0.0);\n\n    gl_FragColor = vec4(uDisplayColor * cosTerm, 1.0);\n}"
 };
 var modelMaterial = {
     uniforms: {
-        "uLightPos": { type: "v3", value: new THREE.Vector3() },
+        "uLightPos": { type: "v3", value: new THREE.Vector3(0, 1, 0) },
         "uLightColor": { type: "c", value: new THREE.Color(0xFFFFFF) }
     },
     vertexShader: "\nvarying vec3 vNormal;\nvarying vec4 vPosition;\n\nvoid main(void)\n{\n    vNormal = normalMatrix * normal;\n\n    vPosition = modelViewMatrix * vec4(position, 1.0);\n    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n}\n        ",
     fragmentShader: "\nuniform vec3 uLightPos;\nuniform vec3 uLightColor;\n\nvarying vec3 vNormal;\nvarying vec4 vPosition;\n\n{{PHASE_FUNCTION}}\n\nvoid main() {\n    vec4 lightPos = viewMatrix * vec4(uLightPos, 0.0);\n    vec3 N = normalize(vNormal);\n    vec3 L = normalize(vec3(lightPos));\n    vec3 V = normalize(vec3(-vPosition));\n\n    float cosTerm = max(dot(N, L), 0.0);\n    gl_FragColor.rgb = uLightColor * cosTerm * BRDF(L, V, N);\n    gl_FragColor.a = 1.0;\n}\n        "
 };
+/*!
+Math.uuid.js (v1.4)
+http://www.broofa.com
+mailto:robert@broofa.com
+
+Copyright (c) 2010 Robert Kieffer
+Dual licensed under the MIT and GPL licenses.
+*/
+
+/*
+ * Generate a random uuid.
+ *
+ * USAGE: Math.uuid(length, radix)
+ *   length - the desired number of characters
+ *   radix  - the number of allowable values for each character.
+ *
+ * EXAMPLES:
+ *   // No arguments  - returns RFC4122, version 4 ID
+ *   >>> Math.uuid()
+ *   "92329D39-6F5C-4520-ABFC-AAB64544E172"
+ *
+ *   // One argument - returns ID of the specified length
+ *   >>> Math.uuid(15)     // 15 character ID (default base=62)
+ *   "VcydxgltxrVZSTV"
+ *
+ *   // Two arguments - returns ID of the specified length, and radix. (Radix must be <= 62)
+ *   >>> Math.uuid(8, 2)  // 8 character ID (base=2)
+ *   "01001010"
+ *   >>> Math.uuid(8, 10) // 8 character ID (base=10)
+ *   "47473046"
+ *   >>> Math.uuid(8, 16) // 8 character ID (base=16)
+ *   "098F4D35"
+ */
+(function() {
+  // Private array of chars to use
+  var CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
+
+  Math.uuid = function (len, radix) {
+    var chars = CHARS, uuid = [], i;
+    radix = radix || chars.length;
+
+    if (len) {
+      // Compact form
+      for (i = 0; i < len; i++) uuid[i] = chars[0 | Math.random()*radix];
+    } else {
+      // rfc4122, version 4 form
+      var r;
+
+      // rfc4122 requires these characters
+      uuid[8] = uuid[13] = uuid[18] = uuid[23] = '-';
+      uuid[14] = '4';
+
+      // Fill in random data.  At i==19 set the high bits of clock sequence as
+      // per rfc4122, sec. 4.1.5
+      for (i = 0; i < 36; i++) {
+        if (!uuid[i]) {
+          r = 0 | Math.random()*16;
+          uuid[i] = chars[(i == 19) ? (r & 0x3) | 0x8 : r];
+        }
+      }
+    }
+
+    return uuid.join('');
+  };
+
+  // A more performant, but slightly bulkier, RFC4122v4 solution.  We boost performance
+  // by minimizing calls to random()
+  Math.uuidFast = function() {
+    var chars = CHARS, uuid = new Array(36), rnd=0, r;
+    for (var i = 0; i < 36; i++) {
+      if (i==8 || i==13 ||  i==18 || i==23) {
+        uuid[i] = '-';
+      } else if (i==14) {
+        uuid[i] = '4';
+      } else {
+        if (rnd <= 0x02) rnd = 0x2000000 + (Math.random()*0x1000000)|0;
+        r = rnd & 0xf;
+        rnd = rnd >> 4;
+        uuid[i] = chars[(i == 19) ? (r & 0x3) | 0x8 : r];
+      }
+    }
+    return uuid.join('');
+  };
+
+  // A more compact, but less performant, RFC4122v4 solution:
+  Math.uuidCompact = function() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+      return v.toString(16);
+    });
+  };
+})();
 Polymer({
             is: 'shader-item',
 
@@ -20790,6 +20883,7 @@ Polymer({
                     type: String,
                     value: "Unknown"
                 },
+                uuid: String,
                 opened: {
                     type: Boolean,
                     value: false
@@ -20798,6 +20892,7 @@ Polymer({
                     type: Object,
                     observer: "_colorChanged"
                 },
+
                 visible: Boolean,
                 selected: Boolean
             },
@@ -20813,6 +20908,8 @@ Polymer({
 
             createShaderAttrs: function(shaderName) {
                 var shaderProp = pgLib[shaderName];
+                this.name = shaderName;
+                this.uuid = Math.uuid();
                 this._addParamCtrls(shaderProp);
             },
 
@@ -20826,12 +20923,13 @@ Polymer({
                 this.visible = !this.visible;
                 this.fire("shader-visibility-changed", {
                     shaderName: this.name,
+                    uuid: this.uuid,
                     visible: this.visible
                 });
             },
 
             _select: function(event) {
-                this.fire("shader-selected", this.name);
+                this.fire("shader-selected", this.uuid);
             },
 
             _addParamCtrls: function(shaderProp) {
@@ -20882,6 +20980,7 @@ Polymer({
 
                 this.fire("shader-param-changed", {
                     shaderName: this.name,
+                    uuid: this.uuid,
                     name: "uDisplayColor",
                     value: new THREE.Color(colorStr)
                 });
@@ -20893,6 +20992,7 @@ Polymer({
 
             _onParamChanged: function (e) {
                 e.detail.shaderName = this.name;
+                e.detail.uuid = this.uuid;
                 this.fire("shader-param-changed", e.detail);
             }
         });
@@ -20987,7 +21087,6 @@ Polymer({
                 var brdfName = brdfLabel.toLowerCase();
                 var shaderItem = document.createElement("shader-item");
                 shaderItem.label = brdfLabel;
-                shaderItem.name = brdfName;
                 shaderItem.opened = true;
                 shaderItem.createShaderAttrs(brdfName);
 
@@ -20995,12 +21094,12 @@ Polymer({
                 var itemIdx = shaderList.children.length;
                 shaderList.appendChild(shaderItem);
 
-                this.fire("iron-signal", {name: "shader-added", data: brdfName});
+                this.fire("iron-signal", {name: "shader-added", data: {name: brdfName, uuid: shaderItem.uuid}});
 
                 if (itemIdx === 0) {
                     shaderItem.selected = true;
                     // Fire shader-selected event to trigger viewport update.
-                    this.fire("iron-signal", {name: "shader-selected", data: brdfName});
+                    this.fire("iron-signal", {name: "shader-selected", data: shaderItem.uuid});
                 }
 
                 // TODO: Try to avoid this async trigger.
@@ -21011,8 +21110,22 @@ Polymer({
             },
 
             _removeBRDF: function(e) {
-                var brdfName = e.detail.target.name;
-                this.fire("iron-signal", {name: "shader-removed", data: brdfName});
+                var removedShaderId = e.detail.target.uuid;
+                this.fire("iron-signal", {name: "shader-removed", data: removedShaderId});
+
+                // If the removed shader is currently assigned to model preview, we need to set it to
+                // other shader if possible.
+                var shaderList = Polymer.dom(this.$.shaderList).children;
+                for (var i = 0, n = shaderList.length; i < n; i++) {
+                    var shaderItem = shaderList[i];
+                    if (removedShaderId != shaderItem.uuid) {
+                        // TODO: Is it possible to trigger "shader-selected" signal when we modify the
+                        // "selected" attribute.
+                        shaderItem.selected = true;
+                        this.fire("iron-signal", {name: "shader-selected", data: shaderItem.uuid});
+                        break;
+                    }
+                }
             },
 
             _changePlotState: function(e) {
@@ -21027,13 +21140,13 @@ Polymer({
             },
 
             _updateSelectedShader: function(e) {
-                var selectedShaderName = e.detail;
+                var selectedShaderId = e.detail;
                 var shaderList = Polymer.dom(this.$.shaderList).children;
                 shaderList.forEach((item) => {
-                    item.selected = (selectedShaderName === item.name);
+                    item.selected = (selectedShaderId === item.uuid);
                 });
 
-                this.fire("iron-signal", {name: "shader-selected", data: selectedShaderName});
+                this.fire("iron-signal", {name: "shader-selected", data: selectedShaderId});
             },
 
             _updateShaderParam: function(e) {
@@ -21344,12 +21457,13 @@ var plotObjMaterial = {
         "uDisplayColor": { type: "c", value: new THREE.Color() },
         "uMultiplyCos": { type: "1i", value: 0 },
     },
+    derivatives: true,
     vertexShader: "\nuniform vec3 uLightPos;\nuniform int uMultiplyCos;\n\nvarying vec4 vPosition;\n\n{{PHASE_FUNCTION}}\n\nvoid main(void)\n{\n    vec3 N = vec3(0.0, 1.0, 0.0);\n    vec3 L = normalize(uLightPos.xyz);\n    vec3 V = normalize(position.xyz);\n    vec3 pos = position.xyz * BRDF(L, V, N);\n\n    if (uMultiplyCos == 1) {\n        pos *= max(dot(N, L), 0.0);\n    }\n\n    vPosition = modelViewMatrix * vec4(pos, 1.0);\n    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);\n}\n    ",
-    fragmentShader: "\n#extension GL_OES_standard_derivatives : enable\nuniform vec3 uDisplayColor;\nvarying vec4 vPosition;\n\nvoid main() {\n    vec3 V = vPosition.xyz;\n    vec3 N = normalize(cross(dFdx(V.xyz), dFdy(V.xyz)));\n    vec3 L = vec3(0.0, 0.0, 1.0);\n    float cosTerm = max(dot(N, L), 0.0);\n\n    gl_FragColor = vec4(uDisplayColor * cosTerm, 1.0);\n}"
+    fragmentShader: "\nuniform vec3 uDisplayColor;\nvarying vec4 vPosition;\n\nvoid main() {\n    vec3 V = vPosition.xyz;\n    vec3 N = normalize(cross(dFdx(V.xyz), dFdy(V.xyz)));\n    vec3 L = vec3(0.0, 0.0, 1.0);\n    float cosTerm = max(dot(N, L), 0.0);\n\n    gl_FragColor = vec4(uDisplayColor * cosTerm, 1.0);\n}"
 };
 var modelMaterial = {
     uniforms: {
-        "uLightPos": { type: "v3", value: new THREE.Vector3() },
+        "uLightPos": { type: "v3", value: new THREE.Vector3(0, 1, 0) },
         "uLightColor": { type: "c", value: new THREE.Color(0xFFFFFF) }
     },
     vertexShader: "\nvarying vec3 vNormal;\nvarying vec4 vPosition;\n\nvoid main(void)\n{\n    vNormal = normalMatrix * normal;\n\n    vPosition = modelViewMatrix * vec4(position, 1.0);\n    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n}\n        ",
@@ -21377,6 +21491,7 @@ var BrdfViewport = (function (_super) {
         this.visible = false;
         this.visible = true;
         this.plotObjs = {};
+        this.lightDir = new THREE.Vector3(0, 1, 0);
     }
     BrdfViewport.prototype.ready = function () {
         this._initRenderer();
@@ -21431,30 +21546,30 @@ var BrdfViewport = (function (_super) {
         scene.add(this.lightArrow);
         scene.add(this.viewArrow);
     };
-    BrdfViewport.prototype.addPlotObj = function (shaderName) {
+    BrdfViewport.prototype.addPlotObj = function (shaderName, uuid) {
         var shaderProp = pgLib[shaderName];
         // Instinate new shader
         var shaderInst = JSON.parse(JSON.stringify(plotObjMaterial));
-        for (var attrname in shaderProp.uniforms) {
-            shaderInst.uniforms[attrname] = shaderProp.uniforms[attrname];
-        }
+        shaderInst.uniforms = THREE.UniformsUtils.merge([plotObjMaterial.uniforms, shaderProp.uniforms]);
         shaderInst.vertexShader = shaderInst.vertexShader.replace("{{PHASE_FUNCTION}}", shaderProp.brdf);
         // TODO: Apply sub-division algorithm to compute uniform vertex distribution on hemisphere.
         var material = new THREE.ShaderMaterial(shaderInst);
+        material.uniforms.uLightPos.value = this.lightDir;
         var hemisphere = new THREE.Mesh(new THREE.SphereGeometry(5, 128, 32, 0, Math.PI * 2, 0, Math.PI * 0.5), material);
         this.scene.add(hemisphere);
-        this.plotObjs[shaderName] = hemisphere;
+        this.plotObjs[uuid] = hemisphere;
         this.renderJob();
     };
-    BrdfViewport.prototype.removePlotObj = function (shaderName) {
-        this.scene.remove(this.plotObjs[shaderName]);
-        delete this.plotObjs[shaderName];
+    BrdfViewport.prototype.removePlotObj = function (uuid) {
+        this.scene.remove(this.plotObjs[uuid]);
+        delete this.plotObjs[uuid];
         this.renderJob();
     };
     BrdfViewport.prototype.updateShaderParam = function (shaderProp) {
         var shaderName = shaderProp.shaderName;
         if (shaderName !== "all") {
-            var material = this.plotObjs[shaderName].material;
+            var uuid = shaderProp.uuid;
+            var material = this.plotObjs[uuid].material;
             material.uniforms[shaderProp.name].value = shaderProp.value;
         }
         else {
@@ -21466,8 +21581,7 @@ var BrdfViewport = (function (_super) {
         this.renderJob();
     };
     BrdfViewport.prototype.changeVisibility = function (state) {
-        var shaderName = state.shaderName;
-        this.plotObjs[shaderName].visible = state.visible;
+        this.plotObjs[state.uuid].visible = state.visible;
         this.renderJob();
     };
     BrdfViewport.prototype.renderJob = function () {
@@ -21491,14 +21605,14 @@ var BrdfViewport = (function (_super) {
         this.renderer.setSize(width, height);
         this.renderJob();
     };
-    BrdfViewport.prototype.changeLightPos = function (event) {
-        var lightPos = event.detail.normalize();
+    BrdfViewport.prototype.changeLightDir = function (lightDir) {
+        this.lightDir = lightDir;
         for (var key in this.plotObjs) {
             var plot = this.plotObjs[key];
-            plot.material.uniforms.uLightPos.value = lightPos;
+            plot.material.uniforms.uLightPos.value = lightDir;
         }
-        this.lightArrow.setDirection(lightPos);
-        var viewDir = new THREE.Vector3(-lightPos.x, lightPos.y, -lightPos.z);
+        this.lightArrow.setDirection(lightDir);
+        var viewDir = new THREE.Vector3(-lightDir.x, lightDir.y, -lightDir.z);
         this.viewArrow.setDirection(viewDir);
         this.renderJob();
     };
@@ -21565,41 +21679,43 @@ var ModelViewport = (function (_super) {
         this.cameraControl.addEventListener("change", this.renderJob.bind(this));
     };
     ModelViewport.prototype._setupScene = function (scene) {
-        var material = new THREE.MeshPhongMaterial();
+        var material = new THREE.ShaderMaterial(THREE.ShaderLib.basic);
         var sphere = new THREE.Mesh(new THREE.SphereGeometry(5, 64, 64, 0, Math.PI * 2, 0, Math.PI), material);
         this.model = sphere;
         this.scene.add(sphere);
     };
-    ModelViewport.prototype.addMaterial = function (shaderName) {
+    ModelViewport.prototype.addMaterial = function (shaderName, uuid) {
         var shaderProp = pgLib[shaderName];
         // Instinate new shader
         var shaderInst = JSON.parse(JSON.stringify(modelMaterial));
-        for (var attrname in shaderProp.uniforms) {
-            shaderInst.uniforms[attrname] = shaderProp.uniforms[attrname];
-        }
+        shaderInst.uniforms = THREE.UniformsUtils.merge([modelMaterial.uniforms, shaderProp.uniforms]);
         shaderInst.fragmentShader = shaderInst.fragmentShader.replace("{{PHASE_FUNCTION}}", shaderProp.brdf);
         var material = new THREE.ShaderMaterial(shaderInst);
         var light = new THREE.DirectionalLight();
         material.uniforms.uLightPos.value = light.position;
-        this.materialList[shaderName] = material;
+        this.materialList[uuid] = material;
     };
-    ModelViewport.prototype.removeMaterial = function (shaderName) {
-        var material = this.materialList[shaderName];
+    ModelViewport.prototype.removeMaterial = function (uuid) {
+        var material = this.materialList[uuid];
         this.model.material = undefined;
-        delete this.materialList[shaderName];
+        delete this.materialList[uuid];
+        // Assign default material if there is no shader in stock.
+        if (Object.keys(this.materialList).length === 0) {
+            this.model.material = new THREE.ShaderMaterial(THREE.ShaderLib.basic);
+        }
         this.renderJob();
     };
     ModelViewport.prototype.updateShaderParam = function (shaderProp) {
-        var material = this.materialList[shaderProp.shaderName];
+        var material = this.materialList[shaderProp.uuid];
         var paramName = shaderProp.name;
         if (material && paramName in material.uniforms) {
             material.uniforms[paramName].value = shaderProp.value;
             this.renderJob();
         }
     };
-    ModelViewport.prototype.changeShader = function (shaderName) {
-        if (this.materialList.hasOwnProperty(shaderName)) {
-            this.model.material = this.materialList[shaderName];
+    ModelViewport.prototype.changeShader = function (uuid) {
+        if (this.materialList.hasOwnProperty(uuid)) {
+            this.model.material = this.materialList[uuid];
             this.renderJob();
         }
     };
@@ -21657,11 +21773,10 @@ var ModelViewport = (function (_super) {
         this.renderer.setSize(width, height);
         this.renderJob();
     };
-    ModelViewport.prototype.changeLightPos = function (event) {
-        var lightPos = event.detail.normalize();
+    ModelViewport.prototype.changeLightDir = function (lightDir) {
         var material = (this.model.material);
-        if (material.hasOwnProperty("uniforms")) {
-            material.uniforms.uLightPos.value = lightPos;
+        if (material.uniforms.hasOwnProperty("uLightPos")) {
+            material.uniforms.uLightPos.value = lightDir;
         }
         this.renderJob();
     };
@@ -21709,6 +21824,10 @@ Polymer({
                 }
             },
 
+            _openHelpDialog: function(event) {
+                this.fire("open-help-dialog");
+            },
+
             renderJob: function() {
                 this.$.panel.selectedItem.renderJob();
             },
@@ -21722,20 +21841,21 @@ Polymer({
             },
 
             _addShader: function(e) {
-                var shaderName = e.detail;
-                this.$.brdfPlot.addPlotObj(shaderName);
-                this.$.modelPanel.addMaterial(shaderName);
+                var shaderName = e.detail.name;
+                var uuid = e.detail.uuid;
+                this.$.brdfPlot.addPlotObj(shaderName, uuid);
+                this.$.modelPanel.addMaterial(shaderName, uuid);
             },
 
             _removeShader: function(e) {
-                var shaderName = e.detail;
-                this.$.brdfPlot.removePlotObj(shaderName);
-                this.$.modelPanel.removeMaterial(shaderName);
+                var shaderId = e.detail;
+                this.$.brdfPlot.removePlotObj(shaderId);
+                this.$.modelPanel.removeMaterial(shaderId);
             },
 
             _selectShader: function(e) {
-                var shaderName = e.detail;
-                this.$.modelPanel.changeShader(shaderName);
+                var shaderId = e.detail;
+                this.$.modelPanel.changeShader(shaderId);
             },
 
             _updateShaderParam: function (e) {
@@ -21749,7 +21869,9 @@ Polymer({
             },
 
             _changeLightPos: function (event) {
-                this.$.panel.selectedItem.changeLightPos(event);
+                var lightDir = event.detail.normalize();
+                this.$.brdfPlot.changeLightDir(lightDir);
+                this.$.modelPanel.changeLightDir(lightDir);
             },
 
             changeModel: function(modelName) {
