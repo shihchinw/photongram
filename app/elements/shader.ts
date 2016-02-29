@@ -92,6 +92,8 @@ let plotObjMaterial = {
         "uMultiplyCos": { type: "1i", value: 0 },
     },
 
+    derivatives: true,
+
     vertexShader: `
 uniform vec3 uLightPos;
 uniform int uMultiplyCos;
@@ -116,7 +118,6 @@ void main(void)
 }
     `,
     fragmentShader: `
-#extension GL_OES_standard_derivatives : enable
 uniform vec3 uDisplayColor;
 varying vec4 vPosition;
 
@@ -132,7 +133,7 @@ void main() {
 
 let modelMaterial = {
         uniforms: {
-            "uLightPos": { type: "v3", value: new THREE.Vector3() },
+            "uLightPos": { type: "v3", value: new THREE.Vector3(0, 1, 0) },
             "uLightColor": { type: "c", value: new THREE.Color(0xFFFFFF) }
         },
 
