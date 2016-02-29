@@ -8,7 +8,6 @@
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
-<link rel="import" href="../bower_components/paper-tooltip/paper-tooltip.html">
 
 <link rel="import" href="shader-item.html">
 
@@ -40,7 +39,6 @@
         <div class="flex-vertical">
             <paper-toolbar>
                 <span class="title">Photongram</span>
-                <paper-tooltip position="bottom">Press <b>'h'</b> for more info.</paper-tooltip>
             </paper-toolbar>
             <iron-ajax id="topodata" auto url="../assets/asset.json" handleAs="json"
                        last-response="{{assets}}"></iron-ajax>

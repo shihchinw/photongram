@@ -2,6 +2,8 @@
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/iron-a11y-keys/iron-a11y-keys.html">
 <link rel="import" href="../bower_components/iron-signals/iron-signals.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+
 
 <link rel="import" href="track-ball.html">
 <link rel="import" href="brdf-viewport.html">
@@ -37,6 +39,13 @@
                 bottom: 0;
                 left: 0;
             }
+
+            #help {
+                z-index: 101;
+                position: absolute;
+                right: 5px;
+                bottom: 5px;
+            }
         </style>
 
         <iron-a11y-keys id="keys" keys="d g m h" target="[[target]]" on-keys-pressed="_onPressed">
@@ -48,6 +57,7 @@
             <model-viewport id="modelPanel" name="objView"></model-viewport>
         </iron-pages>
         <track-ball on-light-pos-changed="_changeLightPos"></track-ball>
+        <paper-icon-button id="help" icon="custom-icons:help" on-click="_openHelpDialog"></paper-icon-button>
 
         <!-- Binding signals from the attribute panel. -->
         <iron-signals on-iron-signal-shader-added='_addShader'></iron-signals>
@@ -84,6 +94,10 @@
                     var widgetName = key === "d" ? "brdfPlot" : "objView";
                     this.$.panel.select(widgetName);
                 }
+            },
+
+            _openHelpDialog: function(event) {
+                this.fire("open-help-dialog");
             },
 
             renderJob: function() {
