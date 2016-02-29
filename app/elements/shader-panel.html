@@ -110,7 +110,6 @@
                 var brdfName = brdfLabel.toLowerCase();
                 var shaderItem = document.createElement("shader-item");
                 shaderItem.label = brdfLabel;
-                shaderItem.name = brdfName;
                 shaderItem.opened = true;
                 shaderItem.createShaderAttrs(brdfName);
 
@@ -118,12 +117,12 @@
                 var itemIdx = shaderList.children.length;
                 shaderList.appendChild(shaderItem);
 
-                this.fire("iron-signal", {name: "shader-added", data: brdfName});
+                this.fire("iron-signal", {name: "shader-added", data: {name: brdfName, uuid: shaderItem.uuid}});
 
                 if (itemIdx === 0) {
                     shaderItem.selected = true;
                     // Fire shader-selected event to trigger viewport update.
-                    this.fire("iron-signal", {name: "shader-selected", data: brdfName});
+                    this.fire("iron-signal", {name: "shader-selected", data: shaderItem.uuid});
                 }
 
                 // TODO: Try to avoid this async trigger.
@@ -134,8 +133,22 @@
             },
 
             _removeBRDF: function(e) {
-                var brdfName = e.detail.target.name;
-                this.fire("iron-signal", {name: "shader-removed", data: brdfName});
+                var removedShaderId = e.detail.target.uuid;
+                this.fire("iron-signal", {name: "shader-removed", data: removedShaderId});
+
+                // If the removed shader is currently assigned to model preview, we need to set it to
+                // other shader if possible.
+                var shaderList = Polymer.dom(this.$.shaderList).children;
+                for (var i = 0, n = shaderList.length; i < n; i++) {
+                    var shaderItem = shaderList[i];
+                    if (removedShaderId != shaderItem.uuid) {
+                        // TODO: Is it possible to trigger "shader-selected" signal when we modify the
+                        // "selected" attribute.
+                        shaderItem.selected = true;
+                        this.fire("iron-signal", {name: "shader-selected", data: shaderItem.uuid});
+                        break;
+                    }
+                }
             },
 
             _changePlotState: function(e) {
@@ -150,13 +163,13 @@
             },
 
             _updateSelectedShader: function(e) {
-                var selectedShaderName = e.detail;
+                var selectedShaderId = e.detail;
                 var shaderList = Polymer.dom(this.$.shaderList).children;
                 shaderList.forEach((item) => {
-                    item.selected = (selectedShaderName === item.name);
+                    item.selected = (selectedShaderId === item.uuid);
                 });
 
-                this.fire("iron-signal", {name: "shader-selected", data: selectedShaderName});
+                this.fire("iron-signal", {name: "shader-selected", data: selectedShaderId});
             },
 
             _updateShaderParam: function(e) {

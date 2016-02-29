@@ -99,20 +99,21 @@
             },
 
             _addShader: function(e) {
-                var shaderName = e.detail;
-                this.$.brdfPlot.addPlotObj(shaderName);
-                this.$.modelPanel.addMaterial(shaderName);
+                var shaderName = e.detail.name;
+                var uuid = e.detail.uuid;
+                this.$.brdfPlot.addPlotObj(shaderName, uuid);
+                this.$.modelPanel.addMaterial(shaderName, uuid);
             },
 
             _removeShader: function(e) {
-                var shaderName = e.detail;
-                this.$.brdfPlot.removePlotObj(shaderName);
-                this.$.modelPanel.removeMaterial(shaderName);
+                var shaderId = e.detail;
+                this.$.brdfPlot.removePlotObj(shaderId);
+                this.$.modelPanel.removeMaterial(shaderId);
             },
 
             _selectShader: function(e) {
-                var shaderName = e.detail;
-                this.$.modelPanel.changeShader(shaderName);
+                var shaderId = e.detail;
+                this.$.modelPanel.changeShader(shaderId);
             },
 
             _updateShaderParam: function (e) {
@@ -126,7 +127,9 @@
             },
 
             _changeLightPos: function (event) {
-                this.$.panel.selectedItem.changeLightPos(event);
+                var lightDir = event.detail.normalize();
+                this.$.brdfPlot.changeLightDir(lightDir);
+                this.$.modelPanel.changeLightDir(lightDir);
             },
 
             changeModel: function(modelName) {

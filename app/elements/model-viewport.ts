@@ -51,39 +51,41 @@ class ModelViewport extends polymer.Base {
     }
 
     _setupScene(scene: THREE.Scene) {
-        let material = new THREE.MeshPhongMaterial();
+        let material = new THREE.ShaderMaterial(THREE.ShaderLib.basic);
         let sphere = new THREE.Mesh(
             new THREE.SphereGeometry(5, 64, 64, 0, Math.PI * 2, 0, Math.PI), material);
         this.model = sphere;
         this.scene.add(sphere);
     }
 
-    addMaterial(shaderName: string) {
+    addMaterial(shaderName: string, uuid: string) {
         let shaderProp = pgLib[shaderName];
 
         // Instinate new shader
         let shaderInst = JSON.parse(JSON.stringify(modelMaterial));
-        for (let attrname in shaderProp.uniforms) {
-            shaderInst.uniforms[attrname] = shaderProp.uniforms[attrname];
-        }
-
+        shaderInst.uniforms = THREE.UniformsUtils.merge([modelMaterial.uniforms, shaderProp.uniforms]);
         shaderInst.fragmentShader = shaderInst.fragmentShader.replace("{{PHASE_FUNCTION}}", shaderProp.brdf);
 
         let material = new THREE.ShaderMaterial(shaderInst);
         let light = new THREE.DirectionalLight();
         material.uniforms.uLightPos.value = light.position;
-        this.materialList[shaderName] = material;
+        this.materialList[uuid] = material;
     }
 
-    removeMaterial(shaderName: string) {
-        let material = this.materialList[shaderName];
+    removeMaterial(uuid: string) {
+        let material = this.materialList[uuid];
         this.model.material = undefined;
-        delete this.materialList[shaderName];
+        delete this.materialList[uuid];
+
+        // Assign default material if there is no shader in stock.
+        if (Object.keys(this.materialList).length === 0) {
+            this.model.material = new THREE.ShaderMaterial(THREE.ShaderLib.basic);
+        }
         this.renderJob();
     }
 
     updateShaderParam(shaderProp) {
-        let material = this.materialList[shaderProp.shaderName];
+        let material = this.materialList[shaderProp.uuid];
         let paramName = shaderProp.name;
         if (material && paramName in material.uniforms) {
             material.uniforms[paramName].value = shaderProp.value;
@@ -91,9 +93,9 @@ class ModelViewport extends polymer.Base {
         }
     }
 
-    changeShader(shaderName: string) {
-        if (this.materialList.hasOwnProperty(shaderName)) {
-            this.model.material = this.materialList[shaderName];
+    changeShader(uuid: string) {
+        if (this.materialList.hasOwnProperty(uuid)) {
+            this.model.material = this.materialList[uuid];
             this.renderJob();
         }
     }
@@ -164,11 +166,10 @@ class ModelViewport extends polymer.Base {
         this.renderJob();
     }
 
-    changeLightPos(event) {
-        let lightPos = event.detail.normalize();
+    changeLightDir(lightDir: THREE.Vector3) {
         let material = <THREE.ShaderMaterial>(this.model.material);
-        if (material.hasOwnProperty("uniforms")) {
-            material.uniforms.uLightPos.value = lightPos;
+        if (material.uniforms.hasOwnProperty("uLightPos")) {
+            material.uniforms.uLightPos.value = lightDir;
         }
         this.renderJob();
     }

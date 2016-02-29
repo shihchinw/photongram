@@ -16,6 +16,7 @@ class BrdfViewport extends polymer.Base {
     lightArrow: THREE.ArrowHelper;
     viewArrow: THREE.ArrowHelper;
     plotObjs: Object;
+    lightDir: THREE.Vector3;
 
     @property({observer: "renderJob"})
     visible = false;
@@ -24,6 +25,7 @@ class BrdfViewport extends polymer.Base {
         super();
         this.visible = true;
         this.plotObjs = {};
+        this.lightDir = new THREE.Vector3(0, 1, 0);
     }
 
     ready() {
@@ -91,29 +93,28 @@ class BrdfViewport extends polymer.Base {
         scene.add(this.viewArrow);
     }
 
-    addPlotObj(shaderName: string) {
+    addPlotObj(shaderName: string, uuid: string) {
         let shaderProp = pgLib[shaderName];
 
         // Instinate new shader
         let shaderInst = JSON.parse(JSON.stringify(plotObjMaterial));
-        for (let attrname in shaderProp.uniforms) {
-            shaderInst.uniforms[attrname] = shaderProp.uniforms[attrname];
-        }
-
+        shaderInst.uniforms = THREE.UniformsUtils.merge([plotObjMaterial.uniforms, shaderProp.uniforms]);
         shaderInst.vertexShader = shaderInst.vertexShader.replace("{{PHASE_FUNCTION}}", shaderProp.brdf);
 
         // TODO: Apply sub-division algorithm to compute uniform vertex distribution on hemisphere.
         let material = new THREE.ShaderMaterial(shaderInst);
+        material.uniforms.uLightPos.value = this.lightDir;
+
         let hemisphere = new THREE.Mesh(
             new THREE.SphereGeometry(5, 128, 32, 0, Math.PI * 2, 0, Math.PI * 0.5), material);
         this.scene.add(hemisphere);
-        this.plotObjs[shaderName] = hemisphere;
+        this.plotObjs[uuid] = hemisphere;
         this.renderJob();
     }
 
-    removePlotObj(shaderName: string) {
-        this.scene.remove(this.plotObjs[shaderName]);
-        delete this.plotObjs[shaderName];
+    removePlotObj(uuid: string) {
+        this.scene.remove(this.plotObjs[uuid]);
+        delete this.plotObjs[uuid];
         this.renderJob();
     }
 
@@ -121,7 +122,8 @@ class BrdfViewport extends polymer.Base {
         let shaderName = shaderProp.shaderName;
 
         if (shaderName !== "all") {
-            let material = this.plotObjs[shaderName].material;
+            let uuid = shaderProp.uuid;
+            let material = this.plotObjs[uuid].material;
             material.uniforms[shaderProp.name].value = shaderProp.value;
         } else {
             for (let key in this.plotObjs) {
@@ -134,8 +136,7 @@ class BrdfViewport extends polymer.Base {
     }
 
     changeVisibility(state) {
-        let shaderName = state.shaderName;
-        this.plotObjs[shaderName].visible = state.visible;
+        this.plotObjs[state.uuid].visible = state.visible;
         this.renderJob();
     }
 
@@ -166,16 +167,16 @@ class BrdfViewport extends polymer.Base {
         this.renderJob();
     }
 
-    changeLightPos(event) {
-        let lightPos = event.detail.normalize();
+    changeLightDir(lightDir: THREE.Vector3) {
+        this.lightDir = lightDir;
 
         for (let key in this.plotObjs) {
             let plot = this.plotObjs[key];
-            plot.material.uniforms.uLightPos.value = lightPos;
+            plot.material.uniforms.uLightPos.value = lightDir;
         }
 
-        this.lightArrow.setDirection(lightPos);
-        let viewDir = new THREE.Vector3(-lightPos.x, lightPos.y, -lightPos.z);
+        this.lightArrow.setDirection(lightDir);
+        let viewDir = new THREE.Vector3(-lightDir.x, lightDir.y, -lightDir.z);
         this.viewArrow.setDirection(viewDir);
         this.renderJob();
     }
