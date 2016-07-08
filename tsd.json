@@ -6,13 +6,13 @@
   "bundle": "app/typings/tsd.d.ts",
   "installed": {
     "threejs/three.d.ts": {
-      "commit": "d1f6bde13f2209be42e86c3686761e8bfcbb50a5"
+      "commit": "448b1ab712df827697d6e7a350bfb6737a00a463"
     },
     "threejs/three-orbitcontrols.d.ts": {
-      "commit": "ba257a9b91bc0de1bdd9091b6723194c905a902a"
+      "commit": "448b1ab712df827697d6e7a350bfb6737a00a463"
     },
     "threejs/three-projector.d.ts": {
-      "commit": "d1f6bde13f2209be42e86c3686761e8bfcbb50a5"
+      "commit": "448b1ab712df827697d6e7a350bfb6737a00a463"
     }
   }
 }

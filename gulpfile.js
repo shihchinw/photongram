@@ -33,7 +33,7 @@ gulp.task('vulcanize', function () {
 });
 
 gulp.task('compress', function () {
-    return gulp.src('app/scripts/*.js')
+    return gulp.src('app/scripts/**/*.js')
         .pipe(uglify())
         .pipe(gulp.dest(dist('scripts')));
 });

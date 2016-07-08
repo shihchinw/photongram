@@ -1,7 +1,7 @@
 /// <reference path="../bower_components/polymer-ts/polymer-ts.d.ts" />
 /// <reference path="../typings/threejs/three.d.ts" />
 /// <reference path="../typings/threejs/three-orbitcontrols.d.ts" />
-/// <reference path="../typings/threejs/three-objloader.d.ts" />
+/// <reference path="../typings/threejs/three-gltfloader.d.ts" />
 /// <reference path="../elements/shader.ts" />
 
 @component("model-viewport")
@@ -13,7 +13,7 @@ class ModelViewport extends polymer.Base {
     cameraControl: THREE.OrbitControls;
     model: THREE.Mesh;
     materialList: Object;
-    objLoader: THREE.OBJLoader;
+    gltfLoader: THREE.glTFLoader;
 
     @property({observer: "renderJob"})
     visible = false;
@@ -21,7 +21,7 @@ class ModelViewport extends polymer.Base {
     constructor() {
         super();
         this.visible = false;
-        this.objLoader = new THREE.OBJLoader();
+        this.gltfLoader = new THREE.glTFLoader();
         this.materialList = {};
     }
 
@@ -118,21 +118,21 @@ class ModelViewport extends polymer.Base {
             this.renderJob();
         } else {
             this.fire("toogle-spinner", true);
-            this.objLoader.load(`assets/obj/${modelName}.obj`,
+            this.gltfLoader.load(`assets/obj/${modelName}.gltf`,
                                 this._onModelLoaded.bind(this));
         }
     }
 
-    _onModelLoaded(obj) {
+    _onModelLoaded(data) {
         let oldMaterial = this.model.material;
         this.scene.remove(this.model);
 
-        obj.traverse(function(child) {
-            if (child instanceof THREE.Mesh) {
-                this.model = child;
-                this.model.material = oldMaterial;
-                this.scene.add(child);
-                this._adjustCameraFocus(child.geometry);
+        data.scene.traverse(function(child) {
+        if (child instanceof THREE.Mesh) {
+            this.model = child;
+            this.model.material = oldMaterial;
+            this.scene.add(child);
+            this._adjustCameraFocus(child.geometry);
             }
         }.bind(this));
 
