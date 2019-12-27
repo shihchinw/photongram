@@ -1,6 +1,6 @@
 # Photongram
 
-A web-based BRDF visualizer.
+A web-based BRDF visualizer. [[demo](http://shihchinw.github.io/Photongram/)]
 
 ## Prerequisites
 
